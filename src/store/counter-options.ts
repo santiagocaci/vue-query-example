@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 
-export const useCounterOptions = defineStore('counterOptions', {
-  state: () => ({
+type State = {
+  count: number;
+  lastChanged?: Date;
+};
+
+export const useCounterOptionsStore = defineStore('counterOptions', {
+  state: (): State => ({
     count: 0,
     lastChanged: undefined,
   }),
@@ -10,5 +15,13 @@ export const useCounterOptions = defineStore('counterOptions', {
     squareCount: state => state.count * state.count,
   },
 
-  actions: {},
+  actions: {
+    incrementBy(value: number) {
+      this.count += value;
+      this.lastChanged = new Date();
+    },
+    incrementByOne() {
+      this.incrementBy(1);
+    },
+  },
 });
