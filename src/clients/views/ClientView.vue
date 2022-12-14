@@ -1,41 +1,25 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useMutation, useQueryClient } from '@tanstack/vue-query';
 
-import { clientsApi } from '@/api/clientsApi';
 import useClient from '@/clients/composables/useClient';
 import LoadingModal from '@/shared/components/LoadingModa.vue';
 
-import type { Client } from '@/clients/types/client';
-
 const route = useRoute();
 const router = useRouter();
-const queryClient = useQueryClient();
-const { client, isLoading, isError } = useClient(
-  Number(route.params.id as string)
-);
 
-const updateClient = async (client: Client): Promise<Client> => {
-  // await new Promise(resolve => setTimeout(() => resolve(true), 2000));
+const {
+  client,
+  isLoading,
+  isError,
+  clientMutation,
+  isUpdatingClient,
+  isLoadingClient,
+  isSuccesClient,
+  updateClient,
+} = useClient(Number(route.params.id as string));
 
-  const { data } = await clientsApi.patch<Client>(
-    `/clients/${client.id}`,
-    client
-  );
-
-  const queries = queryClient
-    .getQueryCache()
-    .findAll(['clients?page='], { exact: false });
-  // query.forEach(query => query.reset());
-
-  queries.forEach(query => query.fetch());
-  return data;
-};
-
-const clientMutation = useMutation(updateClient);
-
-watch(clientMutation.isSuccess, () => {
+watch(isUpdatingClient, () => {
   setTimeout(() => {
     clientMutation.reset();
   }, 2000);
@@ -48,16 +32,16 @@ watch(isError, () => {
 
 <template>
   <div>
-    <h3 v-if="clientMutation.isLoading.value">Saving...</h3>
-    <h3 v-if="clientMutation.isSuccess.value">Saved!</h3>
+    <h3 v-if="isLoadingClient.value">Saving...</h3>
+    <h3 v-if="isSuccesClient.value">Saved!</h3>
 
     <LoadingModal v-if="isLoading" />
     <div v-if="client">
       <h1>{{ client.name }}</h1>
-      <form @submit.prevent="clientMutation.mutate(client!)">
+      <form @submit.prevent="updateClient(client!)">
         <input type="text" placeholder="Name" v-model="client.name" />
         <input type="text" placeholder="Address" v-model="client.address" />
-        <button :disabled="clientMutation.isLoading.value">Save</button>
+        <button :disabled="isLoadingClient.value">Save</button>
       </form>
     </div>
 
